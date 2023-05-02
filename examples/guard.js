@@ -42,7 +42,8 @@ function stopGuarding () {
 
 // Pathfinder to the guard position
 function moveToGuardPos () {
-  bot.pathfinder.setMovements(new Movements(bot))
+  const mcData = require('minecraft-data')(bot.version)
+  bot.pathfinder.setMovements(new Movements(bot, mcData))
   bot.pathfinder.setGoal(new goals.GoalBlock(guardPos.x, guardPos.y, guardPos.z))
 }
 

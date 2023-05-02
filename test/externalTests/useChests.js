@@ -3,7 +3,8 @@ const assert = require('assert')
 const { once } = require('events')
 
 module.exports = () => async (bot) => {
-  const Item = require('prismarine-item')(bot.registry)
+  const mcData = require('minecraft-data')(bot.version)
+  const Item = require('prismarine-item')(bot.version)
 
   bot.test.groundY = bot.supportFeature('tallWorld') ? -60 : 4
 
@@ -25,8 +26,8 @@ module.exports = () => async (bot) => {
     blockItemsByName = 'blocksByName'
   }
 
-  const chestBlockId = bot.registry.blocksByName.chest.id
-  const trappedChestBlockId = bot.registry.blocksByName.trapped_chest.id
+  const chestBlockId = mcData.blocksByName.chest.id
+  const trappedChestBlockId = mcData.blocksByName.trapped_chest.id
 
   function itemByName (items, name) {
     for (let i = 0; i < items.length; ++i) {
@@ -64,9 +65,9 @@ module.exports = () => async (bot) => {
     chest.close()
   }
 
-  await bot.test.setInventorySlot(chestSlot, new Item(bot.registry[blockItemsByName].chest.id, 3, 0))
-  await bot.test.setInventorySlot(trappedChestSlot, new Item(bot.registry[blockItemsByName].trapped_chest.id, 3, 0))
-  await bot.test.setInventorySlot(boneSlot, new Item(bot.registry.itemsByName.bone.id, 3, 0))
+  await bot.test.setInventorySlot(chestSlot, new Item(mcData[blockItemsByName].chest.id, 3, 0))
+  await bot.test.setInventorySlot(trappedChestSlot, new Item(mcData[blockItemsByName].trapped_chest.id, 3, 0))
+  await bot.test.setInventorySlot(boneSlot, new Item(mcData.itemsByName.bone.id, 3, 0))
 
   await bot.test.becomeSurvival()
 
