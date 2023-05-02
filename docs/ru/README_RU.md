@@ -1,4 +1,4 @@
-# Mineflayer
+# Minecraft-Player
 
 [![Версия NPM](https://badge.fury.io/js/mineflayer.svg)](http://badge.fury.io/js/mineflayer)
 [![Последние изменения](https://github.com/PrismarineJS/mineflayer/workflows/CI/badge.svg)](https://github.com/PrismarineJS/mineflayer/actions?query=workflow%3A%22CI%22)
@@ -12,9 +12,9 @@
 | <sub>EN</sub> [English](../README.md) | <sub>RU</sub> [русский](../ru/README_RU.md) | <sub>ES</sub> [Español](../es/README_ES.md) | <sub>FR</sub> [Français](../fr/README_FR.md) | <sub>TR</sub> [Türkçe](../tr/README_TR.md) | <sub>ZH</sub> [中文](../zh/README_ZH_CN.md) |
 |-------------------------|----------------------------|----------------------------|----------------------------|----------------------------|----------------------------|
 
-Создавайте ботов Minecraft с помощью мощного, стабильного и высокоуровневого JavaScript [API](api.md), также можете использовать Python
+Создавайте ботов Minecraft с помощью мощного, стабильного и высокоуровневого JavaScript [API](api.md).
 
-Первый раз используете Node.js? Начните с [этого](tutorial.md). Любите гонять змею? Зацените [Python примеры](https://github.com/PrismarineJS/mineflayer/tree/master/examples/python) и попробуйте колабнуться в [Mineflayer Google коллабе](https://colab.research.google.com/github/PrismarineJS/mineflayer/blob/master/docs/mineflayer.ipynb).
+Первый раз используете Node.js? Начните с [этого](tutorial.md).
 
 ## Возможности
 
@@ -108,7 +108,7 @@ bot.once('spawn', () => {
 ```
 После запуска, вы в прямом эфире сможете наблюдать за происходящим:
 
-[<img src="https://prismarinejs.github.io/prismarine-viewer/test_1.16.1.png" alt="viewer" width="500">](https://prismarinejs.github.io/prismarine-viewer/)
+[<img src="https://prismarine.js.org/prismarine-viewer/test_1.16.1.png" alt="viewer" width="500">](https://prismarine.js.org/prismarine-viewer/)
 
 #### Больше примеров
 

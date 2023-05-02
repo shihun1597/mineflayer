@@ -6,10 +6,9 @@ const mc = require('minecraft-protocol')
 const assert = require('assert')
 
 for (const supportedVersion of mineflayer.testedVersions) {
-  const registry = require('prismarine-registry')(supportedVersion)
-  const version = registry.version
+  const mcData = require('minecraft-data')(supportedVersion)
+  const version = mcData.version
   const Chunk = require('prismarine-chunk')(supportedVersion)
-  const hasSignedChat = registry.supportFeature('signedChat')
 
   function generateChunkPacket (chunk) {
     const lights = chunk.dumpLight()
@@ -68,7 +67,7 @@ for (const supportedVersion of mineflayer.testedVersions) {
         bot.test.generateLoginPacket = () => {
           let loginPacket
           if (bot.supportFeature('usesLoginPacket')) {
-            loginPacket = registry.loginPacket
+            loginPacket = mcData.loginPacket
             loginPacket.entityId = 0 // Default login packet in minecraft-data 1.16.5 is 1, so set it to 0
           } else {
             loginPacket = {
@@ -104,68 +103,19 @@ for (const supportedVersion of mineflayer.testedVersions) {
         bot.chat('hi')
       })
       server.on('login', (client) => {
-        client.write('login', bot.test.generateLoginPacket())
-        const message = hasSignedChat
-          ? JSON.stringify({ text: 'hello' })
-          : JSON.stringify({
-            translate: 'chat.type.text',
-            with: [{
-              text: 'gary'
-            },
-            'hello'
-            ]
-          })
-
-        if (hasSignedChat) {
-          const uuid = 'd3527a0b-bc03-45d5-a878-2aafdd8c8a43' // random
-
-          if (registry.supportFeature('useChatSessions')) {
-            client.write('player_chat', {
-              plainMessage: 'hello',
-              filterType: 0,
-              type: 0,
-              networkName: JSON.stringify({ text: 'gary' }),
-              previousMessages: [],
-              senderUuid: uuid,
-              timestamp: Date.now(),
-              index: 0,
-              salt: 0n
-            })
-          } else if (registry.supportFeature('chainedChatWithHashing')) {
-            client.write('player_chat', {
-              plainMessage: 'hello',
-              filterType: 0,
-              type: 0,
-              networkName: JSON.stringify({ text: 'gary' }),
-              previousMessages: [],
-              senderUuid: uuid,
-              timestamp: Date.now(),
-              salt: 0n,
-              signature: Buffer.alloc(0)
-            })
-          } else {
-            client.write('player_chat', {
-              signedChatContent: '',
-              unsignedChatContent: message,
-              type: 0,
-              senderUuid: uuid,
-              senderName: JSON.stringify({ text: 'gary' }),
-              senderTeam: undefined,
-              timestamp: Date.now(),
-              salt: 0n,
-              signature: Buffer.alloc(0)
-            })
-          }
-        } else {
-          client.write('chat', { message, position: 0, sender: '0' })
-        }
-        function onChat (packet) {
-          const msg = packet.message || packet.unsignedChatContent || packet.signedChatContent
-          assert.strictEqual(msg, 'hi')
+        const message = JSON.stringify({
+          translate: 'chat.type.text',
+          with: [{
+            text: 'gary'
+          },
+          'hello'
+          ]
+        })
+        client.write('chat', { message, position: 0, sender: '0' })
+        client.on('chat', (packet) => {
+          assert.strictEqual(packet.message, 'hi')
           done()
-        }
-        client.on('chat_message', onChat)
-        client.on('chat', onChat)
+        })
       })
     })
     it('entity effects', (done) => {
@@ -180,10 +130,9 @@ for (const supportedVersion of mineflayer.testedVersions) {
       const entities = bot.registry.entitiesByName
       const creeperId = entities.creeper ? entities.creeper.id : entities.Creeper.id
       server.on('login', (client) => {
-        client.write(bot.registry.supportFeature('consolidatedEntitySpawnPacket') ? 'spawn_entity' : 'spawn_entity_living', {
+        client.write('spawn_entity_living', {
           entityId: 8, // random
           entityUUID: '00112233-4455-6677-8899-aabbccddeeff',
-          objectUUID: '00112233-4455-6677-8899-aabbccddeeff',
           type: creeperId,
           x: 10,
           y: 11,
@@ -272,23 +221,14 @@ for (const supportedVersion of mineflayer.testedVersions) {
           loginPacket.hashedSeed = [0, 0]
           loginPacket.entityId = 0
           respawnPacket = {
-            // 1.19+ the `dimension` filed is a string in respawn packet and undefined in login packet, in previous versions it's same NBT data in login/respawn
-            dimension: bot.supportFeature('dimensionDataInCodec') ? 'minecraft:overworld' : loginPacket.dimension,
-            worldName: loginPacket.worldName,
-            hashedSeed: loginPacket.hashedSeed,
+            dimension: loginPacket.dimension,
+            worldName: 'minecraft:overworld',
+            hashedSeed: [0, 0],
             gamemode: 0,
             previousGamemode: 255,
             isDebug: false,
             isFlat: false,
-            copyMetadata: true,
-            death: {
-              dimensionName: '',
-              location: {
-                x: 0,
-                y: 0,
-                z: 0
-              }
-            }
+            copyMetadata: true
           }
         } else {
           respawnPacket = {
@@ -387,97 +327,30 @@ for (const supportedVersion of mineflayer.testedVersions) {
           bot.on('entitySpawn', (entity) => {
             const player = bot.players[entity.username]
             assert.strictEqual(entity.username, player.displayName.toString())
-            if (registry.supportFeature('playerInfoActionIsBitfield')) {
-              client.write('player_info', {
-                action: 53,
-                data: [{
-                  uuid: '1-2-3-4',
-                  player: {
-                    name: 'bot5',
-                    properties: []
-                  },
-                  gamemode: 0,
-                  latency: 0,
-                  displayName: '{"text":"wvffle"}'
-                }]
-              })
-            } else {
-              client.write('player_info', {
-                id: 56,
-                state: 'play',
-                action: 3,
-                length: 1,
-                data: [{
-                  UUID: '1-2-3-4',
-                  name: 'bot5',
-                  propertiesLength: 0,
-                  properties: [],
-                  gamemode: 0,
-                  ping: 0,
-                  hasDisplayName: true,
-                  displayName: '{"text":"wvffle"}'
-                }]
-              })
-            }
+            client.write('player_info', {
+              id: 56,
+              state: 'play',
+              action: 3,
+              length: 1,
+              data: [{
+                UUID: '1-2-3-4',
+                name: 'bot5',
+                propertiesLength: 0,
+                properties: [],
+                gamemode: 0,
+                ping: 0,
+                hasDisplayName: true,
+                displayName: '{"text":"wvffle"}'
+              }]
+            })
           })
 
           bot.once('playerUpdated', (player) => {
             assert.strictEqual('wvffle', player.displayName.toString())
-            if (registry.supportFeature('playerInfoActionIsBitfield')) {
-              client.write('player_info', {
-                action: 53,
-                data: [{
-                  uuid: '1-2-3-4',
-                  player: {
-                    name: 'bot5',
-                    properties: []
-                  },
-                  gamemode: 0,
-                  latency: 0
-                }]
-              })
-            } else {
-              client.write('player_info', {
-                id: 56,
-                state: 'play',
-                action: 3,
-                length: 1,
-                data: [{
-                  UUID: '1-2-3-4',
-                  name: 'bot5',
-                  propertiesLength: 0,
-                  properties: [],
-                  gamemode: 0,
-                  ping: 0,
-                  hasDisplayName: false
-                }]
-              })
-            }
-
-            bot.once('playerUpdated', (player) => {
-              assert.strictEqual(player.entity.username, player.displayName.toString())
-              done()
-            })
-          })
-
-          if (registry.supportFeature('playerInfoActionIsBitfield')) {
-            client.write('player_info', {
-              action: 53,
-              data: [{
-                uuid: '1-2-3-4',
-                player: {
-                  name: 'bot5',
-                  properties: []
-                },
-                gamemode: 0,
-                latency: 0
-              }]
-            })
-          } else {
             client.write('player_info', {
               id: 56,
               state: 'play',
-              action: 0,
+              action: 3,
               length: 1,
               data: [{
                 UUID: '1-2-3-4',
@@ -489,7 +362,28 @@ for (const supportedVersion of mineflayer.testedVersions) {
                 hasDisplayName: false
               }]
             })
-          }
+
+            bot.once('playerUpdated', (player) => {
+              assert.strictEqual(player.entity.username, player.displayName.toString())
+              done()
+            })
+          })
+
+          client.write('player_info', {
+            id: 56,
+            state: 'play',
+            action: 0,
+            length: 1,
+            data: [{
+              UUID: '1-2-3-4',
+              name: 'bot5',
+              propertiesLength: 0,
+              properties: [],
+              gamemode: 0,
+              ping: 0,
+              hasDisplayName: false
+            }]
+          })
 
           client.write('named_entity_spawn', {
             entityId: 56,
@@ -525,36 +419,21 @@ for (const supportedVersion of mineflayer.testedVersions) {
         server.on('login', (client) => {
           serverClient = client
 
-          if (registry.supportFeature('playerInfoActionIsBitfield')) {
-            client.write('player_info', {
-              action: 53,
-              data: [{
-                uuid: '1-2-3-4',
-                player: {
-                  name: 'bot5',
-                  properties: []
-                },
-                gamemode: 0,
-                latency: 0
-              }]
-            })
-          } else {
-            client.write('player_info', {
-              id: 56,
-              state: 'play',
-              action: 0,
-              length: 1,
-              data: [{
-                UUID: '1-2-3-4',
-                name: 'bot5',
-                propertiesLength: 0,
-                properties: [],
-                gamemode: 0,
-                ping: 0,
-                hasDisplayName: false
-              }]
-            })
-          }
+          client.write('player_info', {
+            id: 56,
+            state: 'play',
+            action: 0,
+            length: 1,
+            data: [{
+              UUID: '1-2-3-4',
+              name: 'bot5',
+              propertiesLength: 0,
+              properties: [],
+              gamemode: 0,
+              ping: 0,
+              hasDisplayName: false
+            }]
+          })
 
           client.write('named_entity_spawn', {
             entityId: 56,
@@ -594,10 +473,9 @@ for (const supportedVersion of mineflayer.testedVersions) {
           // Versions prior to 1.11 have capital first letter
           const entities = bot.registry.entitiesByName
           const creeperId = entities.creeper ? entities.creeper.id : entities.Creeper.id
-          client.write(bot.registry.supportFeature('consolidatedEntitySpawnPacket') ? 'spawn_entity' : 'spawn_entity_living', {
+          client.write('spawn_entity_living', {
             entityId: 8, // random
             entityUUID: '00112233-4455-6677-8899-aabbccddeeff',
-            objectUUID: '00112233-4455-6677-8899-aabbccddeeff',
             type: creeperId,
             x: 10,
             y: 11,
@@ -651,7 +529,6 @@ for (const supportedVersion of mineflayer.testedVersions) {
             z: 0,
             pitch: 0,
             yaw: 0,
-            headPitch: 0,
             objectData: 1,
             velocityX: 0,
             velocityY: 0,
@@ -676,11 +553,6 @@ for (const supportedVersion of mineflayer.testedVersions) {
             metadataPacket.metadata[0].value.itemId = itemData.itemId
             metadataPacket.metadata[0].value.present = true
           }
-
-          if (bot.supportFeature('entityMetadataHasLong')) {
-            metadataPacket.metadata[0].type = 7
-          }
-
           client.write('entity_metadata', metadataPacket)
         })
       })
@@ -773,10 +645,9 @@ for (const supportedVersion of mineflayer.testedVersions) {
           teleportId: 1
         })
 
-        client.write(bot.registry.supportFeature('consolidatedEntitySpawnPacket') ? 'spawn_entity' : 'spawn_entity_living', {
+        client.write('spawn_entity_living', {
           entityId: 8,
           entityUUID: '00112233-4455-6677-8899-aabbccddeeff',
-          objectUUID: '00112233-4455-6677-8899-aabbccddeeff',
           type: zombieId,
           x: zombiePos.x,
           y: zombiePos.y,

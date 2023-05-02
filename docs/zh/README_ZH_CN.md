@@ -1,4 +1,4 @@
-# Mineflayer
+# Minecraft-Player
 
 [![NPM version](https://badge.fury.io/js/mineflayer.svg)](http://badge.fury.io/js/mineflayer)
 [![Build Status](https://github.com/PrismarineJS/mineflayer/workflows/CI/badge.svg)](https://github.com/PrismarineJS/mineflayer/actions?query=workflow%3A%22CI%22)
@@ -40,7 +40,7 @@
 
 然后在你创建的bot项目目录中，使用命令行运行：
 
-`npm install mineflayer`
+`npm install git+https://github.com/Happy-and-Smile/minecraft-player.git`
 
 ## 文档
 
@@ -98,10 +98,25 @@ bot.on('kicked', console.log)
 bot.on('error', console.log)
 ```
 
+### McLeaks or EasyMC 验证方式
+```js
+const mineflayer = require('mineflayer')
+const path = require('path')
+
+const bot = mineflayer.createBot({
+  host: 'server-ip-here', // 我的世界伺服器IP
+  //port: 25565,          // 默认使用25565，如果你的服务器端口不是这个请取消注释并填写。
+  alt: 'your-alt-here',   // 从McLeaks或者EasyMC官网生成的alt
+  // version: false,      // 当你需要指定使用一个版本或快照时，请取消注释并手动填写（如："1.8.9 " 或 "1.16.5"），否则会自动设置。
+  auth: 'mcleaks',        // 验证方式, 支持 easymc 和 mcleaks
+  sessionPath: path.join(__dirname, 'session.json')   // session 文件存档位置，这会生成一个session文档 如果你不想一直刷新你的alt，但session也会失效。如果失效了，你需要刷新你的alt并删除 session.json
+})
+```
+
 ### 看看你的bot在做什么
 
 感谢 [prismarin-viewer](https://github.com/PrismarineJS/prismarine-viewer)项目，它可以在浏览器窗口显示你的机器人正在做什么。  
-只需要运行 `npm install prismarine-viewer` 并将其添加到你的bot代码中。
+只需要运行 `npm install prismane-viewer` 并将其添加到你的bot代码中。
 
 ```js
 const { mineflayer: mineflayerViewer } = require('prismarine-viewer')
@@ -112,7 +127,7 @@ bot.once('spawn', () => {
 
 然后你会得到一个看起来像这样的*实时视图*：
 
-[<img src="https://prismarinejs.github.io/prismarine-viewer/test_1.16.1.png" alt="viewer" width="500">](https://prismarinejs.github.io/prismarine-viewer/)
+[<img src="https://prismarine.js.org/prismarine-viewer/test_1.16.1.png" alt="viewer" width="500">](https://prismarine.js.org/prismarine-viewer/)
 
 #### 更多示例
 
@@ -236,6 +251,9 @@ Mineflayer 支持插件；任何人都可以创建一个插件，在 Mineflayer 
 ### 测试指定测试脚本
 
 运行 `npm mocha_test -- -g <test_name>`，其中 `<test_name>` 是测试名称，例如 `bed`, `useChests`, `rayTrace`...
+
+## 注意事项
+这个代码是从[mineflayer](https://github.com/PrismarineJS/mineflayer) 复制并更改了其内容和依赖库 minecraft-protocol 和 yggdrasil. 制作这些更改的原因只是因为要添加支援[McLeaks](https://mcleaks.net) 和 [EasyMC](https://easymc.io) 的验证自从mineflayer无法添加对于Mojang和Microsoft无关的验证方式。除此之外，此代码的开发者也是一个JS的自学者。因此，所有的许可证都归还给原开发者，如果有任何版权问题，我们将不会负责。
 
 ### 示例
 
